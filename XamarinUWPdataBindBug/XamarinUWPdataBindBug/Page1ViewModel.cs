@@ -40,7 +40,12 @@ namespace XamarinUWPdataBindBug
 
                         //this call will throw a null ref internally to Xamarin.Forms 
                         //on UWP/Win8.1 (desktop), not Android.
-                        Stuff.Add(++i);
+                        //Xamarin.Forms.Device.BeginInvokeOnMainThread(() =>
+                            Stuff.Add(++i);
+                        //);
+
+                        //Xamarin.Forms.Device.BeginInvokeOnMainThread will work around this... 
+                        //but that's kinda counter to the point of a *P*CL
                     }
                     catch (Exception ex)
                     {
