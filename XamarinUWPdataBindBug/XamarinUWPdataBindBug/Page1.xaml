@@ -13,7 +13,9 @@
          HorizontalOptions="CenterAndExpand"
          FontSize="20"/>-->
 
-  <ListView ItemsSource="{ Binding Stuff }"
-            HorizontalOptions="CenterAndExpand"/>
+  <!--<ListView ItemsSource="{ Binding Stuff }"
+            HorizontalOptions="CenterAndExpand"/>-->
+  
+  <local:BindablePicker ItemsSource="{ Binding Stuff }" />
   
 </ContentPage>
