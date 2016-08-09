@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -26,12 +27,17 @@ namespace XamarinUWPdataBindBug
 
         //Bindable property for the selected item
         public static readonly BindableProperty SelectedItemProperty =
-            BindableProperty.Create<BindablePicker, object>(p => p.SelectedItem, null, BindingMode.TwoWay, propertyChanged: OnSelectedItemPropertyChanged);
+            BindableProperty.Create<BindablePicker, object>(
+                                                    p => p.SelectedItem, 
+                                                    null, 
+                                                    BindingMode.TwoWay, 
+                                                    propertyChanged: OnSelectedItemPropertyChanged);
 
         //Bindable property for the items source
         public static readonly BindableProperty ItemsSourceProperty =
             BindableProperty.Create<BindablePicker, IList>(
-                                        p => p.ItemsSource, null,
+                                        p => p.ItemsSource, 
+                                        null,
                                         BindingMode.OneWay, 
                                         propertyChanged: OnItemsSourcePropertyChanged);
 
@@ -81,38 +87,19 @@ namespace XamarinUWPdataBindBug
         /// <param name="newValue">The new value.</param>
         private static void OnItemsSourcePropertyChanged(BindableObject bindable, IEnumerable value, IEnumerable newValue)
         {
-            var picker = (BindablePicker)bindable;
+            var picker = bindable as BindablePicker;
             var eventList = picker.GetType().GetRuntimeEvents();
             var notifyCollection = newValue as INotifyCollectionChanged;
             //var page = picker.Parent as ContentPage;
             //page.Appearing += OnPageAppearing;
             if (notifyCollection != null)
             {
-                notifyCollection.CollectionChanged += (sender, args) =>
-                {
-                    if (args.NewItems != null)
-                    {
-                        //invoke on main thread here?
-                        foreach (var newItem in args.NewItems)
-                        {
-                            picker.Items.Add((newItem ?? "").ToString());
-                        }
-                    }
-                    if (args.OldItems != null)
-                    {
-                        //invoke on main thread here?
-                        foreach (var oldItem in args.OldItems)
-                        {
-                            picker.Items.Remove((oldItem ?? "").ToString());
-                        }
-                    }
-                };
+                notifyCollection.CollectionChanged += (sender, args) => ItemsChangedHandler(picker, args);
             }
 
             if (newValue == null)
                 return;
 
-            //invoke here?
             picker.Items.Clear();
 
             if (string.IsNullOrWhiteSpace(picker.DisplayMemberBinding))
@@ -132,7 +119,6 @@ namespace XamarinUWPdataBindBug
                                 actualValue = field.GetValue(item).ToString();
                             }
                         }
-                        //invoke here?
                         picker.Items.Add((actualValue ?? "").ToString());
                     }
                     catch (System.Exception)
@@ -140,6 +126,24 @@ namespace XamarinUWPdataBindBug
                         throw;
                     }
                 }
+        }
+
+        private static void ItemsChangedHandler(BindablePicker picker, NotifyCollectionChangedEventArgs args)
+        {
+            if (args.NewItems != null)
+            {
+                //invoke on main thread here
+                foreach (var newItem in args.NewItems)
+                    Device.BeginInvokeOnMainThread(() =>
+                        picker.Items.Add((newItem ?? "").ToString()));
+            }
+            if (args.OldItems != null)
+            {
+                //invoke on main thread here
+                foreach (var oldItem in args.OldItems)
+                    Device.BeginInvokeOnMainThread(() =>
+                        picker.Items.Remove((oldItem ?? "").ToString()));
+            }
         }
 
         /// <summary>
